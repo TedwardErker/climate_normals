@@ -1,8 +1,7 @@
 #+TITLE:climate
 #+PROPERTY: header-args:R :session *R:climate* :cache no :results output :exports both :tangle yes
 
-* summarize hdd and cdd at each lat long
-
+* quality control and add lat long to hdd and cdd at stations
 ** heating degree days (hdd)
 Load Data
 #+begin_src R
