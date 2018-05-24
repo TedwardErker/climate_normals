@@ -1,0 +1,247 @@
+#+TITLE:climate
+#+PROPERTY: header-args:R :session *R:climate* :cache no :results output :exports both :tangle yes
+
+* summarize hdd and cdd at each lat long
+
+** heating degree days (hdd)
+Load Data
+#+begin_src R
+library(ggplot2)
+  library(dplyr)
+  library(tidyr)
+  library(stringr)
+          d <- read.table("data/ann-htdd-base65.txt")
+
+          colnames(d) <- c("station", "htdd")
+
+        d <- d %>%
+            mutate(hdd = as.numeric(str_match(htdd, "-*[0-9]+")[,1]),
+                   qual = str_match(htdd, "[A-Z]")[,1])
+
+
+
+  head(d)
+dim(d)
+#+end_src 
+
+#+RESULTS:
+:       station  htdd  hdd qual
+: 1 AQW00061705    0C    0    C
+: 2 CAW00064757 7765Q 7765    Q
+: 3 CQC00914080    0P    0    P
+: 4 CQC00914801    0R    0    R
+: 5 FMC00914395    0P    0    P
+: 6 FMC00914419    0P    0    P
+: [1] 7501    4
+
+Quality Control
+
+I'm not sure about the -7777
+#+begin_src R
+    d <- d %>%
+      filter(qual %in% c("C","S","R"),
+             hdd >= 0)
+  dim(d)
+#+end_src
+
+#+RESULTS:
+: [1] 6317    4
+
+Join to Lat Long
+
+#+begin_src R
+    ll <- read.table("data/temp-station-info.txt", fill = T, stringsAsFactors = F) 
+    ll <- ll[,1:3] # get station, lat, and long
+    colnames(ll) <- c("station","lat","long")
+
+ll <-  ll %>%
+    mutate(station = as.character(station),
+           lat = as.numeric(lat))
+
+dl <- left_join(d, ll)
+#+end_src
+
+#+RESULTS:
+: Warning message:
+: In evalq(as.numeric(lat), <environment>) : NAs introduced by coercion
+: Joining, by = "station"
+: Warning message:
+: Column `station` joining factor and character vector, coercing into character vector
+
+#+begin_src R :exports results :results graphics :file figs/HDD_atStations.png
+  ggplot(dl, aes(x = long, y = lat, color = hdd)) + 
+      geom_point() +
+    scale_color_distiller(palette = "Blues", direction = 1)
+#+end_src
+
+#+RESULTS:
+[[file:figs/HDD_atStations.png]]
+
+
+#+begin_src R :exports results :results graphics :file figs/HDD_atStations_albers.png :width 800
+  ggplot(filter(dl, lat < 50, lat > 25, long < 0), aes(x = long, y = lat, color = hdd)) + 
+      geom_point() +
+    coord_map(projection = "albers", parameters = c(29,45)) +
+    scale_color_distiller(palette = "Blues", direction = 1)
+#+end_src
+
+#+RESULTS:
+[[file:figs/HDD_atStations_albers.png]]
+
+Save heating degree days, quality control with lat long.
+#+begin_src R
+write.csv(dl, "data/hdd_qt_ll.csv")
+#+end_src
+
+#+RESULTS:
+
+** cooling degree days (hdd)
+Load Data
+#+begin_src R
+  library(ggplot2)
+  library(dplyr)
+  library(tidyr)
+  library(stringr)
+  d <- read.table("data/ann-cldd-base65.txt")
+
+            colnames(d) <- c("station", "cldd")
+
+          d <- d %>%
+              mutate(cdd = as.numeric(str_match(cldd, "-*[0-9]+")[,1]),
+                     qual = str_match(cldd, "[A-Z]")[,1])
+    head(d)
+  dim(d)
+#+end_src 
+
+#+RESULTS:
+:       station  cldd  cdd qual
+: 1 AQW00061705 6090C 6090    C
+: 2 CAW00064757  307Q  307    Q
+: 3 CQC00914080 4976P 4976    P
+: 4 CQC00914801 5565R 5565    R
+: 5 FMC00914395 5626P 5626    P
+: 6 FMC00914419 6158P 6158    P
+: [1] 7501    4
+
+Quality Control
+
+I'm not sure about the -7777
+#+begin_src R
+    d <- d %>%
+      filter(qual %in% c("C","S","R"),
+             cdd >= 0) 
+  dim(d)
+#+end_src
+
+#+RESULTS:
+: [1] 6317    4
+
+Join to Lat Long
+
+#+begin_src R
+    ll <- read.table("data/temp-station-info.txt", fill = T, stringsAsFactors = F) 
+    ll <- ll[,1:3] # get station, lat, and long
+    colnames(ll) <- c("station","lat","long")
+
+ll <-  ll %>%
+    mutate(station = as.character(station),
+           lat = as.numeric(lat))
+
+dl <- left_join(d, ll)
+#+end_src
+
+#+RESULTS:
+: Warning message:
+: In evalq(as.numeric(lat), <environment>) : NAs introduced by coercion
+: Joining, by = "station"
+: Warning message:
+: Column `station` joining factor and character vector, coercing into character vector
+
+#+begin_src R :exports results :results graphics :file figs/CDD_atStations.png
+  ggplot(dl, aes(x = long, y = lat, color = cdd)) + 
+      geom_point() +
+    scale_color_distiller(palette = "Reds", direction = 1)
+#+end_src
+
+#+RESULTS:
+[[file:figs/CDD_atStations.png]]
+
+
+#+begin_src R :exports results :results graphics :file figs/CDD_atStations_albers.png :width 800
+  ggplot(filter(dl, lat < 50, lat > 25, long < 0), aes(x = long, y = lat, color = cdd)) + 
+      geom_point() +
+    coord_map(projection = "albers", parameters = c(29,45)) +
+    scale_color_distiller(palette = "Reds", direction = 1)
+#+end_src
+
+#+RESULTS:
+[[file:figs/CDD_atStations_albers.png]]
+
+Save heating degree days, quality control with lat long.
+#+begin_src R
+write.csv(dl, "data/cdd_qt_ll.csv")
+#+end_src
+
+#+RESULTS:
+
+* combine this with cities dataset
+#+begin_src R
+library(sp)
+  library(jsonlite)
+library(dplyr)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src R
+
+  json_file <- "https://gist.githubusercontent.com/TedwardErker/d97e19ed23a0dea4106076961d4f22e0/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json"
+  cities <- jsonlite::fromJSON(json_file) %>%
+    select(city, latitude, longitude)
+coordinates(cities) <- ~ longitude + latitude
+proj4string(cities) <- CRS("+init=epsg:4326")
+#+end_src
+
+#+RESULTS:
+
+
+#+begin_src R
+hdd <- read.csv("data/hdd_qt_ll.csv", stringsAsFactors =F) 
+coordinates(hdd) <- ~long + lat
+proj4string(hdd) <- CRS("+init=epsg:4326")
+cdd <- read.csv("data/cdd_qt_ll.csv", stringsAsFactors =F) 
+coordinates(cdd) <- ~long + lat
+proj4string(cdd) <- CRS("+init=epsg:4326")
+#+end_src
+
+#+RESULTS:
+
+find closest station, randomly select if tie
+#+begin_src R
+  hdd.dists <- spDists(cities, hdd, longlat = T)
+  hdd.dists.min <- apply(dists, 1, function(x) which(x == min(x))[1])
+  hdd <- hdd[dists.min,]
+
+  cdd.dists <- spDists(cities, cdd, longlat = T)
+  cdd.dists.min <- apply(dists, 1, function(x) which(x == min(x))[1])
+  cdd <- cdd[dists.min,]
+#+end_src
+
+#+RESULTS:
+
+
+#+begin_src R
+
+    d <- bind_cols(hdd@data,cdd@data,cities@data, data.frame(coordinates(cities))) %>%
+        select(cdd, hdd, city, longitude, latitude)
+#+end_src
+
+#+RESULTS:
+
+save
+
+#+begin_src R
+write.csv(d, "data/cities_hdd_cdd.csv")
+#+end_src
+
+#+RESULTS:
