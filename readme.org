@@ -1,0 +1,30 @@
+#+Title: NOAA climate normals 1981-2010
+
+National Centers for Environmental Information, formerly National
+Climatic Data Center (NCDC), at the National Oceanic and Atmospheric
+Administration
+https://www.ncdc.noaa.gov/
+
+Download from:
+https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/
+
+** Download data (HDD and CDD now)
+#+begin_src sh
+mkdir data
+cd data
+
+# download data readme
+wget https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/readme.txt
+
+# download temperature station meta data
+wget -O temp-station-info.txt https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/station-inventories/temp-inventory.txt
+
+# download annual heating degree day 
+wget -O ann-htdd-base65.txt https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/temperature/ann-htdd-normal.txt
+
+# download annual cooling degree day 
+wget -O ann-cldd-base65.txt https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/products/temperature/ann-cldd-normal.txt
+
+#+end_src
+
+#+RESULTS:
