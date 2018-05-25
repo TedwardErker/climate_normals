@@ -196,7 +196,7 @@ library(dplyr)
 
   json_file <- "https://gist.githubusercontent.com/TedwardErker/d97e19ed23a0dea4106076961d4f22e0/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json"
   cities <- jsonlite::fromJSON(json_file) %>%
-    select(city, latitude, longitude)
+    select(city, latitude, longitude, population)
 coordinates(cities) <- ~ longitude + latitude
 proj4string(cities) <- CRS("+init=epsg:4326")
 #+end_src
@@ -232,7 +232,7 @@ find closest station, randomly select if tie
 #+begin_src R
 
     d <- bind_cols(hdd@data,cdd@data,cities@data, data.frame(coordinates(cities))) %>%
-        select(cdd, hdd, city, longitude, latitude)
+        select(cdd, hdd, city, longitude, latitude, population)
 #+end_src
 
 #+RESULTS:
@@ -244,3 +244,4 @@ write.csv(d, "data/cities_hdd_cdd.csv")
 #+end_src
 
 #+RESULTS:
+
