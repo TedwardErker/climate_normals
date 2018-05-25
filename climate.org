@@ -24,18 +24,30 @@ dim(d)
 #+end_src 
 
 #+RESULTS:
-:       station  htdd  hdd qual
-: 1 AQW00061705    0C    0    C
-: 2 CAW00064757 7765Q 7765    Q
-: 3 CQC00914080    0P    0    P
-: 4 CQC00914801    0R    0    R
-: 5 FMC00914395    0P    0    P
-: 6 FMC00914419    0P    0    P
-: [1] 7501    4
+#+begin_example
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+      station  htdd  hdd qual
+1 AQW00061705    0C    0    C
+2 CAW00064757 7765Q 7765    Q
+3 CQC00914080    0P    0    P
+4 CQC00914801    0R    0    R
+5 FMC00914395    0P    0    P
+6 FMC00914419    0P    0    P
+[1] 7501    4
+#+end_example
 
 Quality Control
 
-I'm not sure about the -7777
+I'm not sure about the -7777 (remove all those questionable, less than 0)
 #+begin_src R
     d <- d %>%
       filter(qual %in% c("C","S","R"),
@@ -124,7 +136,7 @@ Load Data
 
 Quality Control
 
-I'm not sure about the -7777
+
 #+begin_src R
     d <- d %>%
       filter(qual %in% c("C","S","R"),
@@ -219,11 +231,11 @@ find closest station, randomly select if tie
 #+begin_src R
   hdd.dists <- spDists(cities, hdd, longlat = T)
   hdd.dists.min <- apply(hdd.dists, 1, function(x) which(x == min(x))[1])
-  hdd <- hdd[dists.min,]
+  hdd <- hdd[hdd.dists.min,]
 
   cdd.dists <- spDists(cities, cdd, longlat = T)
   cdd.dists.min <- apply(cdd.dists, 1, function(x) which(x == min(x))[1])
-  cdd <- cdd[dists.min,]
+  cdd <- cdd[cdd.dists.min,]
 #+end_src
 
 #+RESULTS:
