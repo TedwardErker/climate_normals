@@ -218,11 +218,11 @@ proj4string(cdd) <- CRS("+init=epsg:4326")
 find closest station, randomly select if tie
 #+begin_src R
   hdd.dists <- spDists(cities, hdd, longlat = T)
-  hdd.dists.min <- apply(dists, 1, function(x) which(x == min(x))[1])
+  hdd.dists.min <- apply(hdd.dists, 1, function(x) which(x == min(x))[1])
   hdd <- hdd[dists.min,]
 
   cdd.dists <- spDists(cities, cdd, longlat = T)
-  cdd.dists.min <- apply(dists, 1, function(x) which(x == min(x))[1])
+  cdd.dists.min <- apply(cdd.dists, 1, function(x) which(x == min(x))[1])
   cdd <- cdd[dists.min,]
 #+end_src
 
