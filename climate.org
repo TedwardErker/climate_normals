@@ -21,29 +21,17 @@ library(ggplot2)
 
   head(d)
 dim(d)
-#+end_src 
+#+end_src
 
 #+RESULTS:
-#+begin_example
-
-Attaching package: ‘dplyr’
-
-The following objects are masked from ‘package:stats’:
-
-    filter, lag
-
-The following objects are masked from ‘package:base’:
-
-    intersect, setdiff, setequal, union
-      station  htdd  hdd qual
-1 AQW00061705    0C    0    C
-2 CAW00064757 7765Q 7765    Q
-3 CQC00914080    0P    0    P
-4 CQC00914801    0R    0    R
-5 FMC00914395    0P    0    P
-6 FMC00914419    0P    0    P
-[1] 7501    4
-#+end_example
+:       station  htdd  hdd qual
+: 1 AQW00061705    0C    0    C
+: 2 CAW00064757 7765Q 7765    Q
+: 3 CQC00914080    0P    0    P
+: 4 CQC00914801    0R    0    R
+: 5 FMC00914395    0P    0    P
+: 6 FMC00914419    0P    0    P
+: [1] 7501    4
 
 Quality Control
 
@@ -61,7 +49,7 @@ I'm not sure about the -7777 (remove all those questionable, less than 0)
 Join to Lat Long
 
 #+begin_src R
-    ll <- read.table("data/temp-station-info.txt", fill = T, stringsAsFactors = F) 
+    ll <- read.table("data/temp-station-info.txt", fill = T, stringsAsFactors = F)
     ll <- ll[,1:3] # get station, lat, and long
     colnames(ll) <- c("station","lat","long")
 
@@ -80,7 +68,7 @@ dl <- left_join(d, ll)
 : Column `station` joining factor and character vector, coercing into character vector
 
 #+begin_src R :exports results :results graphics :file figs/HDD_atStations.png
-  ggplot(dl, aes(x = long, y = lat, color = hdd)) + 
+  ggplot(dl, aes(x = long, y = lat, color = hdd)) +
       geom_point() +
     scale_color_distiller(palette = "Blues", direction = 1)
 #+end_src
@@ -90,10 +78,16 @@ dl <- left_join(d, ll)
 
 
 #+begin_src R :exports results :results graphics :file figs/HDD_atStations_albers.png :width 800
-  ggplot(filter(dl, lat < 50, lat > 25, long < 0), aes(x = long, y = lat, color = hdd)) + 
-      geom_point() +
+  ggplot(filter(dl, lat < 50, lat > 25, long < 0), aes(x = long, y = lat, color = hdd)) +
+      geom_point(size = 2.5) +
     coord_map(projection = "albers", parameters = c(29,45)) +
-    scale_color_distiller(palette = "Blues", direction = 1)
+    scale_color_distiller("Heating\nDegree\nDays (HDD)",palette = "Blues", direction = 1) +
+    theme_bw() +
+    theme(legend.position = c(.9,.23),
+          text = element_text(size = 18),
+          legend.direction = "vertical") +
+    labs(x = "longitude", y = "latitude")
+
 #+end_src
 
 #+RESULTS:
@@ -122,7 +116,7 @@ Load Data
                      qual = str_match(cldd, "[A-Z]")[,1])
     head(d)
   dim(d)
-#+end_src 
+#+end_src
 
 #+RESULTS:
 :       station  cldd  cdd qual
@@ -140,7 +134,7 @@ Quality Control
 #+begin_src R
     d <- d %>%
       filter(qual %in% c("C","S","R"),
-             cdd >= 0) 
+             cdd >= 0)
   dim(d)
 #+end_src
 
@@ -150,7 +144,7 @@ Quality Control
 Join to Lat Long
 
 #+begin_src R
-    ll <- read.table("data/temp-station-info.txt", fill = T, stringsAsFactors = F) 
+    ll <- read.table("data/temp-station-info.txt", fill = T, stringsAsFactors = F)
     ll <- ll[,1:3] # get station, lat, and long
     colnames(ll) <- c("station","lat","long")
 
@@ -169,7 +163,7 @@ dl <- left_join(d, ll)
 : Column `station` joining factor and character vector, coercing into character vector
 
 #+begin_src R :exports results :results graphics :file figs/CDD_atStations.png
-  ggplot(dl, aes(x = long, y = lat, color = cdd)) + 
+  ggplot(dl, aes(x = long, y = lat, color = cdd)) +
       geom_point() +
     scale_color_distiller(palette = "Reds", direction = 1)
 #+end_src
@@ -179,10 +173,15 @@ dl <- left_join(d, ll)
 
 
 #+begin_src R :exports results :results graphics :file figs/CDD_atStations_albers.png :width 800
-  ggplot(filter(dl, lat < 50, lat > 25, long < 0), aes(x = long, y = lat, color = cdd)) + 
-      geom_point() +
+  ggplot(filter(dl, lat < 50, lat > 25, long < 0), aes(x = long, y = lat, color = cdd)) +
+      geom_point(size = 2.5) +
     coord_map(projection = "albers", parameters = c(29,45)) +
-    scale_color_distiller(palette = "Reds", direction = 1)
+    scale_color_distiller("Cooling\nDegree\nDays (CDD)",palette = "Reds", direction = 1) +
+    theme_bw() +
+    theme(legend.position = c(.9,.23),
+          text = element_text(size = 18),
+          legend.direction = "vertical") +
+    labs(x = "longitude", y = "latitude")
 #+end_src
 
 #+RESULTS:
@@ -194,6 +193,87 @@ write.csv(dl, "data/cdd_qt_ll.csv")
 #+end_src
 
 #+RESULTS:
+
+* Plot stations in geographic space, colored whether they have more hdd or cdd days.  (HDD - CDD).
+** libraries
+#+begin_src R
+library(scales)
+library(sp)
+library(raster)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:raster’:
+
+    intersect, select, union
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+Attaching package: ‘tidyr’
+
+The following object is masked from ‘package:raster’:
+
+    extract
+#+end_example
+
+
+** hdd minus cdd.
+#+begin_src R
+  hdd <- read.csv("data/hdd_qt_ll.csv", stringsAsFactors =F)
+  cdd <- read.csv("data/cdd_qt_ll.csv", stringsAsFactors =F)
+  dd <- left_join(cdd, hdd, by = c("station","lat","long")) %>%
+    select(hdd, lat, long, cdd) %>%
+    mutate(HDD_minus_CDD = hdd - cdd)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src R :exports results :results graphics :file figs/geo_hdd_cdd.png :width 800
+  ggplot(filter(dd, lat < 50, lat > 25, long < 0), aes(x = long, y = lat, color = HDD_minus_CDD)) +
+      geom_point(size = 2.5) +
+    coord_map(projection = "albers", parameters = c(29,45)) +
+#    scale_color_gradient2("HDD Minus CDD",low = muted("red"), mid = "white", high = muted("blue"), limits = c(-5000,10000)) +
+#    scale_color_gradient2("HDD Minus CDD",low = "#67001f", mid = "white", high = "#053061", limits = c(-5000,10000)) +
+    scale_color_gradient2("HDD - CDD",low = "#b2182b", mid = "white", high = "#2166ac", limits = c(-5000,10000)) +
+    theme_bw() +
+    theme(legend.position = c(.9,.2),
+          text = element_text(size = 18),
+          legend.direction = "vertical") +
+    labs(x = "longitude", y = "latitude")
+#+end_src
+
+#+RESULTS:
+[[file:figs/geo_hdd_cdd.png]]
+
+#+begin_src R :exports results :results graphics :file figs/geo_hdd_cdd_TF.png :width 800
+    ggplot(filter(dd, lat < 50, lat > 25, long < 0), aes(x = long, y = lat, color = hdd > cdd)) +
+        geom_point(size = 1.5) +
+      coord_map(projection = "albers", parameters = c(29,45)) +
+      scale_color_manual("HDD > CDD", labels = c("More Cooling Degree Days", "More Heating Degree Days"), values = c("#b2182b", "#2166ac")) +
+      theme_bw() +
+      theme(legend.position = c(.86,.26),
+            text = element_text(size = 18),
+            legend.direction = "vertical",
+            legend.title = element_blank()) +
+      labs(x = "longitude", y = "latitude")
+#+end_src
+
+#+RESULTS:
+[[file:figs/geo_hdd_cdd_TF.png]]
+
 
 * combine this with cities dataset
 #+begin_src R
@@ -217,10 +297,10 @@ proj4string(cities) <- CRS("+init=epsg:4326")
 
 
 #+begin_src R
-hdd <- read.csv("data/hdd_qt_ll.csv", stringsAsFactors =F) 
+hdd <- read.csv("data/hdd_qt_ll.csv", stringsAsFactors =F)
 coordinates(hdd) <- ~long + lat
 proj4string(hdd) <- CRS("+init=epsg:4326")
-cdd <- read.csv("data/cdd_qt_ll.csv", stringsAsFactors =F) 
+cdd <- read.csv("data/cdd_qt_ll.csv", stringsAsFactors =F)
 coordinates(cdd) <- ~long + lat
 proj4string(cdd) <- CRS("+init=epsg:4326")
 #+end_src
